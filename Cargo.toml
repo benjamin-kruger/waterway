@@ -6,3 +6,4 @@ authors = ["Ben Kruger", "James Seymour"]
 license = "MIT"
 
 [dependencies]
+clap = { version = "4.5.40", features = ["derive"] }
