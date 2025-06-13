@@ -1,11 +1,14 @@
 use git2::Repository;
+
+use std::{fs, io::Write, path::PathBuf};
+
 use rand::{Rng, distr::Alphanumeric, rng};
 use rstest::fixture;
 
 const SUFFIX_LEN: usize = 12;
 
 #[fixture]
-pub fn mock_repo() -> Repository {
+pub fn blank_repo() -> Repository {
     let repo_suffix =
         String::from_utf8(rng().sample_iter(&Alphanumeric).take(SUFFIX_LEN).collect())
             .expect("could not create suffix path");
