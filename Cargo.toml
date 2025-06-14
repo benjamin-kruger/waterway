@@ -5,6 +5,14 @@ edition = "2024"
 authors = ["Ben Kruger", "James Seymour"]
 license = "MIT"
 
+[lib]
+name = "waterway"
+path = "src/lib.rs"
+
+[[bin]]
+name = "waterway"
+path = "src/bin.rs"
+
 [dependencies]
 clap = { version = "4.5.40", features = ["derive"] }
 git2 = "0.20.2"
