@@ -1,8 +1,8 @@
 use std::env::current_dir;
 
 use clap::{Parser, Subcommand};
-mod commands;
-mod git;
+
+use waterway::commands;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -27,7 +27,7 @@ enum Commands {
     },
     #[command(alias = "m", about = "Modify an existing branch")]
     Modify {
-        #[arg(short)]
+        #[arg(short, help = "Optionally modify the current commit message")]
         message: Option<String>,
     },
 }
