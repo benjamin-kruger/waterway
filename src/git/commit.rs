@@ -4,6 +4,7 @@ pub fn new(repo: &Repository, message: &str) {
     let tree_id = repo.index().unwrap().write_tree().unwrap();
     let tree = repo.find_tree(tree_id).unwrap();
 
+    // TODO(James): signature will fail if git config user.email and user.name is not set
     let author = &repo.signature().unwrap();
     let committer = author;
 
