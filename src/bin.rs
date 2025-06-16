@@ -19,7 +19,10 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     #[command(alias = "i", about = "Initiliase waterway in the current repository")]
-    Init,
+    Init {
+        #[arg(help = "The trunk branch name for this repository")]
+        trunk: String,
+    },
     #[command(alias = "c", about = "Create a new branch")]
     Create {
         #[arg(short)]
@@ -37,8 +40,8 @@ fn main() {
     let dir = current_dir().expect("could not fetch current dir");
 
     match args.command {
-        Commands::Init => {
-            commands::init(dir);
+        Commands::Init { trunk } => {
+            commands::init(dir, trunk);
         }
         Commands::Create { message } => {
             commands::create(dir, message);
