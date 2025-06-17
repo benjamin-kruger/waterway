@@ -1,6 +1,6 @@
 use std::env::current_dir;
 
-use clap::{Parser, Subcommand};
+use clap::{ArgAction, Parser, Subcommand};
 
 use waterway::commands;
 
@@ -33,6 +33,13 @@ enum Commands {
         #[arg(short, help = "Optionally modify the current commit message")]
         message: Option<String>,
     },
+    #[command(alias = "r", about = "Restack a branch onto its parent")]
+    Restack {
+        #[arg(help = "The branch to restack - uses the current branch by default")]
+        branch: Option<String>,
+        #[arg(long = "continue", short, action = ArgAction::SetTrue, help = "Continue an existing restack operation")]
+        cont: bool,
+    },
 }
 
 fn main() {
@@ -48,6 +55,9 @@ fn main() {
         }
         Commands::Modify { message } => {
             commands::modify(dir, message);
+        }
+        Commands::Restack { branch, cont } => {
+            commands::restack(dir, branch, cont);
         }
     }
 }

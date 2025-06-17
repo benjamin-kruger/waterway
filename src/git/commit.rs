@@ -24,7 +24,7 @@ pub fn amend(repo: &Repository, message: Option<&str>) {
 
     head_commit
         .amend(
-            Some(&head_ref.name().unwrap()),
+            Some(head_ref.name().unwrap()),
             None,
             None,
             None,
