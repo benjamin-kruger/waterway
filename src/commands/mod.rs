@@ -62,7 +62,11 @@ pub fn modify(dir: impl AsRef<Path>, message: Option<String>) {
         git::commit::amend(&repo, message.as_deref());
 
         let branch = git::branch::head(&repo);
+        let branch_name = branch.name.clone();
+
         meta.revise(db::GitBranch::from(branch));
+
+        restack_recursive(&repo, &mut meta, Some(branch_name), false);
     } else {
         println!("No staged changes");
     }
@@ -76,11 +80,10 @@ enum RestackOperation {
 fn restack_one(
     repo: &Repository,
     meta: &mut Metadata,
-    branch: git::branch::Branch,
+    db_branch: &db::Branch,
     op: RestackOperation,
 ) {
-    let db_branch = meta.get(&db::BranchName(branch.name)).unwrap();
-    let parent = db_branch.parent.unwrap();
+    let parent = db_branch.parent.clone().unwrap();
 
     match op {
         RestackOperation::Init => {
@@ -107,14 +110,18 @@ fn restack_one(
     );
 }
 
-pub fn restack(dir: impl AsRef<Path>, branch_name: Option<String>, cont: bool) {
-    let Context { repo, mut meta } = ensure_init(dir);
-
+pub fn restack_recursive(
+    repo: &Repository,
+    meta: &mut Metadata,
+    branch_name: Option<String>,
+    cont: bool,
+) {
     if let Some(rebase) = git::rebase::existing_rebase(&repo) {
         let branch = git::branch::from(&repo, rebase.orig_head_name().unwrap());
+        let db_branch = meta.get(&db::BranchName(branch.name)).unwrap();
 
         if cont {
-            restack_one(&repo, &mut meta, branch, RestackOperation::Continue);
+            restack_one(&repo, meta, &db_branch, RestackOperation::Continue);
         } else {
             panic!(
                 "rebase already in progress - use --continue flag to continue existing rebase operation."
@@ -126,7 +133,18 @@ pub fn restack(dir: impl AsRef<Path>, branch_name: Option<String>, cont: bool) {
         } else {
             git::branch::head(&repo)
         };
+        let db_branch = meta.get(&db::BranchName(branch.name)).unwrap();
 
-        restack_one(&repo, &mut meta, branch, RestackOperation::Init)
+        restack_one(&repo, meta, &db_branch, RestackOperation::Init);
+
+        for child_branch_name in db_branch.children.iter() {
+            restack_recursive(repo, meta, Some(child_branch_name.0.clone()), false);
+        }
     }
+}
+
+pub fn restack(dir: impl AsRef<Path>, branch_name: Option<String>, cont: bool) {
+    let Context { repo, mut meta } = ensure_init(dir);
+
+    restack_recursive(&repo, &mut meta, branch_name, cont);
 }
