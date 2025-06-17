@@ -18,6 +18,29 @@ pub fn head(repo: &Repository) -> Branch {
     Branch { name, commit }
 }
 
+pub fn from(repo: &Repository, branch: impl AsRef<str>) -> Branch {
+    let branch_unqualified = branch
+        .as_ref()
+        .strip_prefix("refs/heads/")
+        .unwrap_or(branch.as_ref());
+
+    let reference = repo
+        .find_branch(branch_unqualified, git2::BranchType::Local)
+        .unwrap()
+        .into_reference();
+
+    if !reference.is_branch() {
+        panic!("branch name is not pointing at a branch");
+    }
+
+    let commit = reference.peel_to_commit().unwrap();
+
+    Branch {
+        name: branch_unqualified.to_string(),
+        commit,
+    }
+}
+
 pub fn checkout(repo: &Repository, branch: &str) {
     repo.set_head(format!("refs/heads/{}", branch).as_str())
         .unwrap();

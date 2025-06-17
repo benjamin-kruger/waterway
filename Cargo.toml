@@ -10,7 +10,7 @@ name = "waterway"
 path = "src/lib.rs"
 
 [[bin]]
-name = "waterway"
+name = "ww"
 path = "src/bin.rs"
 
 [dependencies]

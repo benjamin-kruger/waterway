@@ -67,3 +67,66 @@ pub fn modify(dir: impl AsRef<Path>, message: Option<String>) {
         println!("No staged changes");
     }
 }
+
+enum RestackOperation {
+    Init,
+    Continue,
+}
+
+fn restack_one(
+    repo: &Repository,
+    meta: &mut Metadata,
+    branch: git::branch::Branch,
+    op: RestackOperation,
+) {
+    let db_branch = meta.get(&db::BranchName(branch.name)).unwrap();
+    let parent = db_branch.parent.unwrap();
+
+    match op {
+        RestackOperation::Init => {
+            git::rebase::init_rebase(
+                repo,
+                db_branch.name.0.as_str(),
+                parent.name.0.as_str(),
+                parent.known_revision.0,
+            );
+        }
+        RestackOperation::Continue => {
+            git::rebase::continue_rebase(repo);
+        }
+    }
+
+    let updated_parent = git::branch::from(repo, parent.name.0.as_str());
+
+    meta.update_parent(
+        &db_branch.name,
+        db::ParentBranch {
+            known_revision: db::Commit::from(updated_parent.commit),
+            ..parent
+        },
+    );
+}
+
+pub fn restack(dir: impl AsRef<Path>, branch_name: Option<String>, cont: bool) {
+    let Context { repo, mut meta } = ensure_init(dir);
+
+    if let Some(rebase) = git::rebase::existing_rebase(&repo) {
+        let branch = git::branch::from(&repo, rebase.orig_head_name().unwrap());
+
+        if cont {
+            restack_one(&repo, &mut meta, branch, RestackOperation::Continue);
+        } else {
+            panic!(
+                "rebase already in progress - use --continue flag to continue existing rebase operation."
+            )
+        }
+    } else {
+        let branch = if let Some(b) = branch_name {
+            git::branch::from(&repo, b)
+        } else {
+            git::branch::head(&repo)
+        };
+
+        restack_one(&repo, &mut meta, branch, RestackOperation::Init)
+    }
+}

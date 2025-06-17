@@ -10,6 +10,12 @@ pub struct BranchName(pub String);
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Commit(pub String);
 
+impl Commit {
+    pub fn from(commit: git2::Commit) -> Self {
+        Self(commit.id().to_string())
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ParentBranch {
     pub name: BranchName,
@@ -116,6 +122,16 @@ impl Metadata {
     pub fn revise(&mut self, git: GitBranch) {
         let name = git.name.clone();
         self.db.branches.get_mut(&name).unwrap().git = git;
+        self.commit();
+    }
+
+    pub fn get(&mut self, branch_name: &BranchName) -> Option<Branch> {
+        self.db.branches.get(branch_name).cloned()
+    }
+
+    pub fn update_parent(&mut self, branch_name: &BranchName, parent: ParentBranch) {
+        let branch = self.db.branches.get_mut(branch_name).unwrap();
+        branch.parent = Some(parent);
         self.commit();
     }
 }
