@@ -18,11 +18,11 @@ pub fn head(repo: &Repository) -> Branch {
     Branch { name, commit }
 }
 
-pub fn from(repo: &Repository, branch: impl AsRef<str>) -> Branch {
-    let branch_unqualified = branch
+pub fn from(repo: &Repository, branch_name: impl AsRef<str>) -> Branch {
+    let branch_unqualified = branch_name
         .as_ref()
         .strip_prefix("refs/heads/")
-        .unwrap_or(branch.as_ref());
+        .unwrap_or(branch_name.as_ref());
 
     let reference = repo
         .find_branch(branch_unqualified, git2::BranchType::Local)
@@ -41,8 +41,8 @@ pub fn from(repo: &Repository, branch: impl AsRef<str>) -> Branch {
     }
 }
 
-pub fn checkout(repo: &Repository, branch: &str) {
-    repo.set_head(format!("refs/heads/{}", branch).as_str())
+pub fn checkout(repo: &Repository, branch_name: &str) {
+    repo.set_head(format!("refs/heads/{}", branch_name).as_str())
         .unwrap();
 
     repo.checkout_head(None).unwrap();
