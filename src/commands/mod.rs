@@ -83,7 +83,24 @@ fn restack_one(
     db_branch: &db::Branch,
     op: RestackOperation,
 ) {
-    let parent = db_branch.parent.clone().unwrap();
+    let parent = if let Some(p) = db_branch.parent.clone() {
+        p
+    } else {
+        // trunk branch does not need to be restacked?
+        return;
+    };
+
+    let db_parent = meta.get(&parent.name).unwrap();
+
+    if parent.known_revision == db_parent.git.revision {
+        println!(
+            "{} does not need to be rebased onto {}",
+            db_branch.name.0.as_str(),
+            db_parent.name.0.as_str()
+        );
+        // branch does not need to be restacked
+        return;
+    }
 
     match op {
         RestackOperation::Init => {
@@ -116,7 +133,7 @@ pub fn restack_recursive(
     branch_name: Option<String>,
     cont: bool,
 ) {
-    if let Some(rebase) = git::rebase::existing_rebase(&repo) {
+    let db_branch = if let Some(rebase) = git::rebase::existing_rebase(&repo) {
         let branch = git::branch::from(&repo, rebase.orig_head_name().unwrap());
         let db_branch = meta.get(&db::BranchName(branch.name)).unwrap();
 
@@ -127,6 +144,8 @@ pub fn restack_recursive(
                 "rebase already in progress - use --continue flag to continue existing rebase operation."
             )
         }
+
+        db_branch
     } else {
         let branch = if let Some(b) = branch_name {
             git::branch::from(&repo, b)
@@ -137,10 +156,14 @@ pub fn restack_recursive(
 
         restack_one(&repo, meta, &db_branch, RestackOperation::Init);
 
-        for child_branch_name in db_branch.children.iter() {
-            restack_recursive(repo, meta, Some(child_branch_name.0.clone()), false);
-        }
+        db_branch
+    };
+
+    for child_branch_name in db_branch.children.iter() {
+        restack_recursive(repo, meta, Some(child_branch_name.0.clone()), false);
     }
+
+    git::branch::checkout(&repo, db_branch.name.0.as_str());
 }
 
 pub fn restack(dir: impl AsRef<Path>, branch_name: Option<String>, cont: bool) {
