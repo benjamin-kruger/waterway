@@ -13,10 +13,14 @@ pub fn open_repo(path: impl AsRef<Path>) -> Repository {
 
     ensure_initial_commit(&repo);
 
+    todo!("no conflicting change");
+
     repo
 }
 
 pub fn _okay_fn() {
     todo!("update again");
     todo!("configlic");
+    todo!("another update");
+    todo!("another update again")
 }
