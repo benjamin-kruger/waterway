@@ -15,3 +15,8 @@ pub fn open_repo(path: impl AsRef<Path>) -> Repository {
 
     repo
 }
+
+pub fn _okay_fn() {
+    todo!("update again");
+    todo!("configlic");
+}
