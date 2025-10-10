@@ -24,4 +24,5 @@ pub fn _okay_fn() {
     todo!("another update");
     todo!("another update again");
     todo!("test third change");
+    test bad change
 }
