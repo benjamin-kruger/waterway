@@ -22,5 +22,7 @@ pub fn _okay_fn() {
     todo!("update again");
     todo!("configlic");
     todo!("another update");
-    todo!("another update again")
+    todo!("another update again");
+    todo!("test third change");
+    test bad change
 }
